@@ -34,8 +34,8 @@ RUN mkdir -p downloads
 RUN chmod +x entrypoint.sh
 
 # Expõe a porta que será usada
-ENV PORT=8080
-EXPOSE 8080
+ENV PORT=5001
+EXPOSE 5001
 
 # Inicia a aplicação usando o script fornecido
 CMD ["/bin/bash", "entrypoint.sh"]

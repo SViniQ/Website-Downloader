@@ -1,39 +1,41 @@
-# Use official Python base image
+# Usa uma imagem oficial do Python mais leve, baseada no Debian Bookworm
 FROM python:3.11-slim-bookworm
 
-# Install system dependencies for Playwright
+# Define a variável de ambiente para forçar o Playwright a instalar 
+# os navegadores em um diretório fixo e acessível globalmente
+ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+
+# Instala ferramentas básicas de sistema
 RUN apt-get update && apt-get install -y \
     wget \
     gnupg \
     && rm -rf /var/lib/apt/lists/*
 
-# Set working directory
+# Define o diretório de trabalho
 WORKDIR /app
 
-# Copy requirements
+# Copia o arquivo de requisitos primeiro para aproveitar o cache do Docker
 COPY requirements.txt .
 
-# Install Python dependencies
+# Instala as dependências do Python
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Install Playwright browsers and dependencies
-RUN playwright install --with-deps chromium
+# Passo crucial: Instala as dependências de sistema do Chromium E o próprio navegador
+RUN playwright install-deps chromium && \
+    playwright install chromium
 
-# Copy application files
+# Copia o resto dos arquivos da aplicação
 COPY . .
 
-# Create downloads directory
+# Cria a pasta de downloads para evitar erros de permissão ou caminho inexistente
 RUN mkdir -p downloads
 
-# Copy and set entrypoint script
-COPY entrypoint.sh /app/entrypoint.sh
-RUN chmod +x /app/entrypoint.sh
+# Dá permissão de execução para o script de inicialização
+RUN chmod +x entrypoint.sh
 
-# Set default PORT environment variable
+# Expõe a porta que será usada
 ENV PORT=8080
-
-# Expose port (Railway/Render will set $PORT)
 EXPOSE 8080
 
-# Use shell form to ensure proper variable expansion
-CMD ["/bin/bash", "/app/entrypoint.sh"]
+# Inicia a aplicação usando o script fornecido
+CMD ["/bin/bash", "entrypoint.sh"]
